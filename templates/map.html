@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .loaded #loading-overlay {
+            opacity: 0;
+        }
+        
+        #loading-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        #loading-message {
+            margin-top: 10px;
+        }
+        
+        .main-content {
+            /* height: 100vh;*/
+            width: 100vw;
+            display: flex;
+        }
+        
+        .map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .stats {
+            background-color: rgb(255, 255, 255);
+            width: 30vw;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading-overlay">
+        <div id="loading-content">
+            <img src="{% static '/images/output-onlinegiftools (3).gif' %}" alt="Loading...">
+            <p id="loading-message" class="text-dark">Loading...</p>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="map" id="m">
+            {{map|safe}}
+        </div>
+        <div class="stats">
+            <h1>Quick stats</h1>
+
+            <div class="charts"></div>
+            <p>MEAN NDVI: </p>
+            <p>MEAN VCI: </p>
+            <p>MEAN TCI: </p>
+            <p>MEAN VHI: </p>
+            <p>MEAN DROUGHT INDEX: </p>
+
+        </div>
+    </div>
+    <script>
+        // Define an array of loading messages
+        var loadingMessages = [
+            'Loading data...',
+            'Generating map...',
+            'Adding layers...',
+        ];
+
+        // Get references to the loading overlay and message elements
+        var loadingOverlay = document.getElementById('loading-overlay');
+        var loadingMessage = document.getElementById('loading-message');
+
+        // Show the loading overlay
+        loadingOverlay.style.display = 'block';
+
+        // Update the loading message every 2 seconds
+        var messageIndex = 0;
+        setInterval(function() {
+            if (messageIndex < loadingMessages.length) {
+                loadingMessage.textContent = loadingMessages[messageIndex];
+                messageIndex++;
+            }
+        }, 2000);
+
+        // Hide the loading overlay when the page has finished loading
+        window.addEventListener('load', function() {
+            loadingOverlay.style.display = 'none';
+            document.getElementById('loading-overlay').classList.add('loaded');
+
+        });
+    </script>
+</body>
+
+</html>
