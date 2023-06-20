@@ -65,6 +65,23 @@
             <p id="loading-message" class="text-dark">Loading...</p>
         </div>
     </div>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="year_start">Year Start:</label>
+        <input type="number" id="year_start" name="year_start" min="2000" max="2100" required>
+
+        <label for="year_end">Year End:</label>
+        <input type="number" id="year_end" name="year_end" min="2000" max="2100" required>
+
+        <label for="month">Month:</label>
+        <select id="month" name="month" required>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <!-- Add options for other months -->
+        </select>
+
+        <button type="submit">Submit</button>
+    </form>
 
     <div class="main-content">
         <div class="map" id="m">

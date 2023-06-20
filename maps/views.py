@@ -90,7 +90,7 @@ def index(request):
     sentinel2 = ee.ImageCollection('COPERNICUS/S2_SR') \
         .filter(ee.Filter.calendarRange(YEAR_START,YEAR_END, 'year')).filter(ee.Filter.calendarRange(startMonth, endMonth, 'month'))\
         .filterBounds(geometry)\
-        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))\
+        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',5))\
         .map(maskS2clouds).median().clip(geometry)
 
     # Calculate NDVI
