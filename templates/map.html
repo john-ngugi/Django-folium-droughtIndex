@@ -41,7 +41,7 @@
         
         .main-content {
             /* height: 100vh;*/
-            width: 100vw;
+            width: 100%;
             display: flex;
         }
         
@@ -55,23 +55,44 @@
             width: 30vw;
             height: 100%;
         }
+        
+        .form-dates {
+            background-color: rgb(130, 48, 211);
+            width: 100%;
+            height: 100px;
+        }
+        
+        .form-dates input {
+            border-color: rgb(255, 255, 255);
+            border-radius: solid 20px;
+            box-shadow: none;
+            outline: none;
+            border-width: 0px;
+            color: black;
+            text-align: center;
+        }
+        
+        .form-dates label {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            color: white;
+        }
     </style>
 </head>
 
-<body>
+<body class="body">
     <div id="loading-overlay">
         <div id="loading-content">
             <img src="{% static '/images/output-onlinegiftools (3).gif' %}" alt="Loading...">
             <p id="loading-message" class="text-dark">Loading...</p>
         </div>
     </div>
-    <form method="POST">
+    <form class="form-dates" method="POST">
         {% csrf_token %}
         <label for="year_start">Year Start:</label>
-        <input type="number" id="year_start" name="year_start" min="2000" max="2100" required>
+        <input type="number" id="year_start" name="year_start" min="2000" max="2100" required placeholder="2000">
 
         <label for="year_end">Year End:</label>
-        <input type="number" id="year_end" name="year_end" min="2000" max="2100" required>
+        <input type="number" id="year_end" name="year_end" min="2000" max="2100" required placeholder="2023">
 
         <label for="month">Month:</label>
         <select id="month" name="month" required>

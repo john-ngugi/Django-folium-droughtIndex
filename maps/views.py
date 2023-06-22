@@ -51,7 +51,7 @@ folium.Map.add_ee_layer = add_ee_layer
 
 def index(request):
     # Create a map centered at Nakuru, Kenya
-    m = folium.Map(location=[-2.3746, 37.9715],tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height='100%',name='terrainOSM')
+    m = folium.Map(location=[-2.3746, 37.9715],tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height='95%',name='terrainOSM')
     worldImagery= folium.TileLayer(tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery')
     # basemapOSM =folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)')
    
