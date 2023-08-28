@@ -3,14 +3,16 @@ import folium
 import json 
 import ee 
 import time 
-from . import L8
 from . import precipitation as pt
 from . import landsat
 from . import VHI as vh
-from colorama import init, Fore, Style
+from colorama import Fore, Style
+import pandas as pd
+import plotly.express as px 
+from datetime import datetime
+# import geemap.foliumap as geemap
 
-init()
-
+ 
 # Create your views here.
 json_data = '''
 {
@@ -49,66 +51,81 @@ def add_ee_layer(self, ee_image_object, vis_params, name):
 # Add the method to the folium Map class
 folium.Map.add_ee_layer = add_ee_layer
 
-def index(request):
-    # Create a map centered at Nakuru, Kenya
-    m = folium.Map(location=[-2.3746, 37.9715],tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height='95%',name='terrainOSM')
+def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
+    process_start = time.time()
+    print('process Started ......')
+     # Create a map centered at Nakuru, Kenya
+    m = folium.Map(location=[-2.3746, 37.9715],tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height="80%",name='terrainOSM')
     worldImagery= folium.TileLayer(tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery')
     # basemapOSM =folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)')
    
     worldImagery.add_to(m)
-    # basemapOSM.add_to(m)
-    # m.save("../templates/map.html")
-    
+
+   
+
+    # Update the values
+    YEAR_START = year_start
+    YEAR_END = year_end
+    monthRangeGetLayersFunction = monthRange
+    startMonth = startMonth
+    endMonth = endMonth
+
     # Define the area of interest (AOI) as a shapefile
     geometry = ee.FeatureCollection('projects/ee-muthamijohn/assets/arthi-galana')
 
-    def maskS2clouds(image):
-        return image.updateMask(image.select('QA60').eq(0));
-    
-
-
-    YEAR_START = 2016
-    YEAR_END = 2022
-
-    startMonth = 1
-    endMonth = startMonth
-
-
     # Visualization Palette
-    # vis = ['d7191c', 'fdae61', 'ffffc0', 'a6d96a', '1a9641']
+
     vis = ['red','yellow','green']
 
-    # get image from the landsat class in the landsat module 
-    landsat8 = landsat.landsat(YEAR_START,YEAR_END,startMonth,endMonth,"LANDSAT/LC08/C02/T1_L2")
-
-    landsatImage=landsat8.getImage()
-    dataset = L8.getImageL8(YEAR_START,YEAR_END,startMonth,endMonth)
-    ndviL8 = L8.getNDVI(YEAR_START,YEAR_END,startMonth,endMonth)
+  
+    
+    # get precipitation Data
     precipitation = pt.precipitation(YEAR_START,YEAR_END,startMonth,endMonth) 
-    lst = landsat8.calcLSTL8("LANDSAT/LC08/C02/T1",ndviL8,geometry,YEAR_START,YEAR_END,startMonth,endMonth).clip(geometry)
-        # Load Sentinel-2 data for the region of interest
-    sentinel2 = ee.ImageCollection('COPERNICUS/S2_SR') \
-        .filter(ee.Filter.calendarRange(YEAR_START,YEAR_END, 'year')).filter(ee.Filter.calendarRange(startMonth, endMonth, 'month'))\
-        .filterBounds(geometry)\
-        .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',5))\
-        .map(maskS2clouds).median().clip(geometry)
 
-    # Calculate NDVI
-    ndvi = sentinel2.normalizedDifference(['B8', 'B4'])
+    
+
+# Image logic and getting image from the landsat class in the landsat module 
+    
+    if YEAR_START >= 2000 and YEAR_END <= 2014:
+        landsat8=  landsat.landsat(YEAR_START,YEAR_END,startMonth,endMonth,"LANDSAT/LE07/C02/T1_L2",monthRangeGetLayersFunction)
+        landsatImage=landsat8.getImage()
+        landsatCollection=landsat8.dataset()
+        ndviL8 = landsat8.getNDVI(landsatCollection,"SR_B4","SR_B3")
+        lst = landsat8.calcLSTL5L4L7("LANDSAT/LE07/C02/T1",ndviL8,geometry).clip(geometry)
+       
+    if YEAR_START >2014 and YEAR_END<= 2029:
+            landsat8 = landsat.landsat(YEAR_START,YEAR_END,startMonth,endMonth,"LANDSAT/LC08/C02/T1_L2",monthRangeGetLayersFunction)
+            landsatImage=landsat8.getImage()
+            landsatCollection=landsat8.dataset()
+            ndviL8 = landsat8.getNDVI(landsatCollection,"SR_B5","SR_B4")
+            lst = landsat8.calcLSTL8("LANDSAT/LC08/C02/T1",ndviL8,geometry).clip(geometry)
+        
+
+    if YEAR_START > 2016:
+        def maskS2clouds(image):
+            return image.updateMask(image.select('QA60').eq(0));
+
+            # Load Sentinel-2 data for the region of interest
+        sentinel2 = ee.ImageCollection('COPERNICUS/S2_SR') \
+            .filter(ee.Filter.calendarRange(YEAR_START,YEAR_END, 'year')).filter(ee.Filter.calendarRange(startMonth, endMonth, 'month'))\
+            .filterBounds(geometry)\
+            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE',5))\
+            .map(maskS2clouds).median().clip(geometry)
+
+        # Calculate NDVI
+        ndvi = sentinel2.normalizedDifference(['B8', 'B4'])
 
     # Define visualization parameters for NDVI
     ndvi_vis_params = {
         'min': 0,
         'max': 1,
-        'palette': ['red', 'yellow', 'green']
+        'palette': ['red', 'yellow','green']
     }
 
     
     image = landsat8.dataset().median()
+    VHI,VCI,TCI = vh.getVHI(image,'SR_B5','SR_B4',geometry,lst)
     
-    VHI,VCI, TCI = vh.getVHI(image,'SR_B5','SR_B4',geometry,lst)
-    
-
     # VHI classification into classes based on threshold values to calculate Drought Index
     image02 = VHI.lt(0.1).And(VHI.gte(-1))
     image04 = ((VHI.gte(0.1)).And(VHI.lt(0.2))).multiply(2)
@@ -116,50 +133,142 @@ def index(request):
     image08 = ((VHI.gte(0.3)).And(VHI.lt(0.4))).multiply(4)
     image10 = (VHI.gte(0.4)).multiply(5)
     Drought_Index = (image02.add(image04).add(image06).add(image08).add(image10)).float()
-    Drought_Index_Mean = Drought_Index.reduceRegion(reducer=ee.Reducer.mean(), geometry=geometry, bestEffort=True,scale=30)
+    # Drought_Index_Mean = Drought_Index.reduceRegion(reducer=ee.Reducer.mean(), geometry=geometry, bestEffort=True,scale=30)
+
+    NDVI_mean = ndviL8.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+    NDVI_mean = ee.Number(NDVI_mean.get('NDVI')).float().getInfo()
+    VHI_mean = VHI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+    VHI_mean = ee.Number(VHI_mean.get('NDVI')).float().getInfo()
+    TCI_mean = TCI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+    TCI_mean = ee.Number(TCI_mean.get('constant')).float().getInfo()
+    VCI_mean = VCI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+    VCI_mean = ee.Number(VCI_mean.get('NDVI')).float().getInfo()
+    Drought_Index_mean = Drought_Index.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+    Drought_Index_mean = ee.Number(Drought_Index_mean.get('NDVI')).float().getInfo()
 
 
+    def compute_veg_indices(start_date, end_date):
+            logFile = open("logs.txt","a")
+            geometry = ee.FeatureCollection('projects/ee-muthamijohn/assets/arthi-galana')
+ 
+            if YEAR_START >= 2000 and YEAR_END < 2014:
+                Drought_Index, TCI, VCI, VHI, ndvi = landsat8.getLSTDroughtIndexL5L7("LANDSAT/LE07/C02/T1",start_date,end_date)
+           
+            if YEAR_START > 2014:
+                Drought_Index, TCI, VCI, VHI, ndvi = landsat8.getLSTDroughtIndexL8("LANDSAT/LC08/C02/T1",start_date,end_date)
+        
 
+            VHI_mean = VHI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+            VHI_mean = ee.Number(VHI_mean.get('NDVI')).float().getInfo()
+            NDVI_mean = ndvi.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+            NDVI_mean = ee.Number(NDVI_mean.get('NDVI')).float().getInfo()
+            TCI_mean = TCI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+            TCI_mean = ee.Number(TCI_mean.get('constant')).float().getInfo()
+            VCI_mean = VCI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+            VCI_mean = ee.Number(VCI_mean.get('NDVI')).float().getInfo()
+            Drought_Index_mean = Drought_Index.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
+            Drought_Index_mean = ee.Number(Drought_Index_mean.get('NDVI')).float().getInfo()
+            logFile.write(f"************************New Entry**********************\nstartDate :{start_date}\tEndDate:{end_date}\t VHI_mean: { VHI_mean}\tTCI_mean:{TCI_mean}\tNDVI_mean:{NDVI_mean}\tVCI_mean:{VCI_mean}\tDrought_index_mean: {Drought_Index_mean}\n******************************End of Entry**********************************")
+            logFile.close()
 
+            return {'start_date': start_date, 'end_date': end_date,'Drought_index_mean': Drought_Index_mean, 'TCI_mean': TCI_mean, 'VCI_mean': VCI_mean,'NDVI_mean': NDVI_mean}
+        
 
-    # todo turn all the image collections to dataframes 
-    # def compute_veg_indices(date):
-    #     with st.spinner("calculating.This might take a while..."):
-    #                 # Compute mean vegetation indices
-    #                 ndvi_mean = ndvi.reduceRegion(reducer=ee.Reducer.mean(), geometry=ROI1, scale=10)
-    #                 sarvi_mean = sarvi.reduceRegion(reducer=ee.Reducer.mean(), geometry=ROI1, scale=10)
-    #                 gci_mean = gci.reduceRegion(reducer=ee.Reducer.mean(), geometry=ROI1, scale=10)
-    #                 npcri_mean = npcri.reduceRegion(reducer=ee.Reducer.mean(), geometry=ROI1, scale=10)
-    #                 rvi_mean = rvi.reduceRegion(reducer=ee.Reducer.mean(), geometry=ROI1, scale=10)
-    #                 evi_mean = evi.reduceRegion(reducer=ee.Reducer.mean(), geometry=ROI1, scale=10)
+    dates = ee.List(landsatCollection.distinct('system:time_start').aggregate_array('system:time_start')).map(
+        lambda time_start: ee.Date(time_start).format('YYYY-MM-dd')).getInfo()
 
-    #                 mean_ndvi = ee.Number(ndvi_mean.get('nd')).float().getInfo()
-    #                 mean_sarvi = ee.Number(sarvi_mean.get('SARVI')).float().getInfo()
-    #                 mean_gci = ee.Number(gci_mean.get('GCI')).float().getInfo()
-    #                 mean_npcri = ee.Number(npcri_mean.get('NPCRI')).float().getInfo()
-    #                 mean_rvi = ee.Number(rvi_mean.get('RVI')).float().getInfo()
-    #                 mean_evi = ee.Number(evi_mean.get('EVI')).float().getInfo()
-    #                 return {'date': date.format('YYYY-MM-dd').getInfo(), 'mean_ndvi': mean_ndvi,'mean_sarvi':mean_sarvi,'mean_gci': mean_gci,'mean_npcri': mean_npcri,'mean_rvi':mean_rvi,'mean_evi':mean_evi}
+    # Retrieve the first sequence of dates
+    first_sequence = []
+    current_sequence = []
 
-    #     # Map the function over a list of dates and convert the resulting list of dictionaries to a pandas dataframe
-    #     dates = ee.List(s2.distinct('system:time_start').aggregate_array('system:time_start')).map(lambda time_start: ee.Date(time_start).format('YYYY-MM-dd')).getInfo()
-    #     data = [compute_veg_indices(date)for date in dates]
-    #     df_all = pd.DataFrame(data).set_index('date')
+    for i, date in enumerate(dates):
+        if i == 0 or int(date.split('-')[0]) >= int(dates[i-1].split('-')[0]):
+            current_sequence.append(date)
+        else:
+            break
 
+    first_sequence = current_sequence
 
-    #     st.dataframe(df_all, use_container_width=True)
+    print(first_sequence)
 
-    #  todo land use land cover 
+    # First, convert the date strings in the first_sequence list to datetime objects
+    from datetime import datetime, timedelta
 
+    date_format = "%Y-%m-%d"
+    first_sequence = [datetime.strptime(date_str, date_format) for date_str in first_sequence]
 
-    visualization = {
-        'bands': ['SR_B4', 'SR_B3', 'SR_B2'],
-        'min': 1,
-        'max': 65455,
-        'gamma': 1.4,
-    }
+    # Create date pairs by picking each date as the start date and adding 16 days to obtain the end date
+    date_pairs = []
+    for i in range(len(first_sequence)):
+        start_date = first_sequence[i]
+        end_date = start_date + timedelta(days=16)
+        date_pairs.append((start_date.strftime(date_format), end_date.strftime(date_format)))
+
+    print(date_pairs)
+
+    DFTIME = time.time()
+    # Perform computations for each date pair and store the results in a list
+    data = []
     
-    ndvi_params = {'min': -1, 'max': 1, 'palette': ['red', 'yellow', 'green']}
+    for start_date, end_date in date_pairs:
+        result = compute_veg_indices(start_date, end_date)
+        data.append(result)
+
+    # Convert the list of dictionaries to a pandas DataFrame and set 'start_date' and 'end_date' as the MultiIndex
+    df= pd.DataFrame(data).drop(['end_date'], axis=1).set_index('start_date')
+    print(df)
+
+    # Step 1: Initialize an empty DataFrame to store the standardized values
+    standardized_df = pd.DataFrame()
+
+    # Step 2: Loop through each season and calculate the mean and standard deviation
+    for season in df.index.get_level_values('start_date').str[:2].unique():
+        seasonal_data = df.loc[df.index.get_level_values('start_date').str[:2] == season]
+        min_of_season = seasonal_data['Drought_index_mean'].min()
+        max_of_season = seasonal_data['Drought_index_mean'].max()
+        range_of_season = max_of_season - min_of_season
+        
+        # Step 3: Compute the standardized values for the 'Drought_index_mean' column
+        standardized_values = (seasonal_data['Drought_index_mean'] - min_of_season) / range_of_season * 2 - 1
+        
+        # Step 4: Assign the standardized values to the 'Standardized_Drought_Index' column
+        seasonal_data['Standardized_Drought_Index'] = standardized_values
+        
+        # Append the seasonal data to the empty DataFrame
+        standardized_df = pd.concat([standardized_df, seasonal_data])
+        standardized_df=standardized_df.drop('Drought_index_mean',axis=1)
+        print(standardized_df.keys())
+    print(standardized_df)
+    
+    DFTIMEEND = time.time()
+    TOTALTIME = DFTIMEEND - DFTIME
+
+    print("Total time to build dataframe is :" + Fore.RED + str(TOTALTIME) + Style.RESET_ALL)
+
+    standardized_df.index = pd.to_datetime(standardized_df.index).strftime("%d/%m/%Y")
+
+    # Plot the bar chart 
+    graph = px.bar(
+        standardized_df,
+        barmode='group',  # Set the barmode to 'group' for separating the bars
+    )
+    if YEAR_START >= 2000 and YEAR_END <= 2014:
+        visualization = {
+            'bands': ['SR_B4', 'SR_B3', 'SR_B2'],
+            'min': 1,
+            'max': 65455,
+            'gamma': 1.4,
+        }
+    else: 
+        visualization = {
+            'bands': ['SR_B4', 'SR_B3', 'SR_B2'],
+            'min': 1,
+            'max': 65455,
+            'gamma': 1.4,
+        }
+
+    
+    ndvi_params = {'min': 0, 'max': 1, 'palette': ['red', 'yellow','#006400']}
 
 
     # Add the layer to the map
@@ -172,17 +281,18 @@ def index(request):
     m.add_ee_layer(VHI, {'min': -1, 'max': 1, 'palette': ['red', 'yellow', 'green']}, 'VHI')
     # # Drought display to map
     m.add_ee_layer(Drought_Index, {'min': 1, 'max': 5, 'palette': vis}, 'Drought Index')
+
     end = time.time()
     rslt = end - start
 
     if float(rslt) >= 30.00:
-       print("major layers load time: " + Fore.RED + str(rslt) + Style.RESET_ALL)
+        print("major layers load time: " + Fore.RED + str(rslt) + Style.RESET_ALL)
     elif float(rslt) >=20.00:
         print("major layers load time: " + Fore.YELLOW + str(rslt) + Style.RESET_ALL)    
     else:
         print("major layers load time: " + Fore.BLUE + str(rslt) + Style.RESET_ALL)
 
-    m.add_ee_layer(dataset.clip(geometry), visualization, 'True Color (432)')
+    m.add_ee_layer(landsatImage.clip(geometry), visualization, 'True Color (432)')
     start=time.time()
     m.add_ee_layer(lst, {'min': 2,'max': 45,'palette': ['040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
 '0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
@@ -193,7 +303,7 @@ def index(request):
 
     minrslt= end - start
     if float(minrslt) >= 20.00:
-       print("lst display process finished within " + Fore.RED + str(minrslt) + Style.RESET_ALL)
+        print("lst display process finished within " + Fore.RED + str(minrslt) + Style.RESET_ALL)
     else:
         print("lst display process finished within " + Fore.BLUE + str(minrslt) + Style.RESET_ALL)
 
@@ -206,16 +316,63 @@ def index(request):
 
     m.add_ee_layer(ndviL8.clip(geometry),ndvi_params,'NDVI L8')
 
-
-    # Add the NDVI layer to the map
-    m.add_ee_layer(ndvi, ndvi_vis_params, 'NDVI')
-
-    # Add a layer control to the map
+    try:
+        # Add the NDVI layer to the map
+        m.add_ee_layer(ndvi, ndvi_vis_params, 'NDVI')
+    except:
+         print("sentinel not yet Discovered")    
+        # Add a layer control to the map
     m.add_child(folium.LayerControl())
 
-    # print(ee.Number(Drought_Index.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9).values().get(0)))
+    process_end = time.time()
+    process_time_rslt = process_end - process_start
+    print("process finished within: " + Fore.MAGENTA + str(process_time_rslt) + Style.RESET_ALL)
+
+    context = {'map': m._repr_html_(),'VHI_mean':VHI_mean,'Drought_index_mean':Drought_Index_mean,'TCI_mean':TCI_mean,'VCI_mean':VCI_mean,'NDVI_mean': NDVI_mean,'graph':graph.to_html()}
+    return context
+
+
+def index(request):
+    # Create a map centered at Nakuru, Kenya
+    m = folium.Map(location=[-1.2921, 36.8219], zoom_start=15,tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery')
+    worldImagery= folium.TileLayer(tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height="80%",name='terrainOSM')
+    # basemapOSM =folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)')
+    worldImagery.add_to(m)
+    if request.method == 'POST':
+            
+        # # Define the area of interest (AOI) as a shapefile
+        # geometry = ee.FeatureCollection('projects/ee-muthamijohn/assets/arthi-galana')
+        # Get the form data
+        year_start = int(request.POST.get('year_start'))
+        year_end = int(request.POST.get('year_end'))
+        month = int(request.POST.get('month'))
+
+        if month == 1:
+            monthRange = ee.Filter.calendarRange(1, 3, 'month')
+            startMonth = 1
+            endMonth = 3
+
+        if month == 2:
+            monthRange = ee.Filter.calendarRange(4, 6, 'month')    
+            startMonth = 4
+            endMonth = 6
+
+        if month == 3:
+            monthRange = ee.Filter.calendarRange(7, 9, 'month')   
+            startMonth = 7
+            endMonth = 9
+
+        if month == 4:
+            monthRange = ee.Filter.calendarRange(10, 12, 'month') 
+            startMonth = 10
+            endMonth = 12
+
+        context = getLayers(year_start,year_end,monthRange,startMonth,endMonth)
+
+        return render(request, 'map.html', context)
+    else:     
+        m.add_child(folium.LayerControl())
+        context = {'map': m._repr_html_()} 
+        
+        return render(request, 'map.html', context)
     
-
-    context = {'map': m._repr_html_()}
-
-    return render(request, 'map.html', context)

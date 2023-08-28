@@ -31,4 +31,4 @@ def getVHI(image,NIR,red,geometry,LST):
 
     VHI = VCI.multiply(ee.Image(0.5)).add(TCI.multiply(ee.Image(0.5)))
 
-    return VHI,VCI, TCI
+    return VHI,VCI,TCI
