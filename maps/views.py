@@ -275,7 +275,7 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
         }
 
     if int(YEAR_END) < 2014:
-      ndvi_params = {'min': -1, 'max': 1, 'palette': ['red','#ff4040','yellow','green','#228b22 ']}
+      ndvi_params = {'min': -1, 'max': 1, 'palette': ['#ff4040','red','yellow','green','#228b22 ']}
     else:
        ndvi_params =  {'min': 0, 'max': 1, 'palette': ['red','yellow','#006600','green','#006400']}
 
