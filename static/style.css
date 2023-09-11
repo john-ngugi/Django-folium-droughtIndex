@@ -1,0 +1,274 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500&family=Poppins:wght@700&family=Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather&family=Montserrat:wght@300;500&family=Poppins:wght@700&family=Roboto&display=swap');
+body {
+    overflow-x: hidden;
+}
+
+#loading-overlay,
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    z-index: 9999;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: opacity 0.5s ease-out;
+}
+
+.loaded #loading-overlay {
+    opacity: 0;
+}
+
+#loading-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+#loading-message {
+    margin-top: 10px;
+}
+
+.main-content {
+    width: 100%;
+    height: 70vh;
+    display: flex;
+}
+
+.map {
+    width: 100%;
+    height: 70vh;
+    left: 0;
+    right: 0;
+    position: absolute;
+}
+
+.stats {
+    /*background-color: rgb(255, 255, 255);*/
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    width: 30vw;
+    height: 50%;
+    position: relative;
+    float: right;
+    margin-left: 70vw;
+    margin-top: 50vh;
+    border-radius: 20px;
+}
+
+.stats p {
+    font-size: small;
+    font-family: 'Roboto', sans-serif;
+    padding-left: 20px;
+}
+
+.stats h1 {
+    color: #563D7C;
+    font-family: 'Roboto', sans-serif;
+    padding-left: 20px;
+}
+
+.next {
+    display: none;
+    transition: 1.5s;
+}
+
+.next.open {
+    position: absolute;
+    width: 100%;
+    margin-left: 50%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(156, 156, 156, 0.437);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 9998;
+    transition: 1.5s;
+    margin-right: 10px;
+    justify-content: space-between;
+}
+
+.form-dates {
+    background-color: #563D7C;
+    width: 100%;
+    height: 50px;
+}
+
+.form-dates h1 {
+    padding-left: 20px;
+    font-family: 'Roboto', sans-serif;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+#month,
+.form-dates input {
+    border-color: rgb(255, 255, 255);
+    border-radius: 10px 10px;
+    box-shadow: none;
+    outline: none;
+    border-width: 1px;
+    color: black;
+    text-align: center;
+    padding-left: 20px;
+    font-family: 'Roboto', sans-serif;
+    width: 180px;
+    height: 30px;
+    margin-bottom: 0.8%;
+    margin-top: 0.8%;
+}
+
+.form-dates label {
+    font-family: 'Roboto', sans-serif;
+    color: white;
+    padding-left: 20px;
+}
+
+.smt-btn {
+    margin-left: 20px;
+    font-family: 'Roboto', sans-serif;
+    background-image: linear-gradient(rgba(107, 190, 5, 0.6), rgba(107, 190, 5, 0.8));
+    outline: none;
+    color: white;
+    height: 35px;
+    width: 90px;
+    box-shadow: none;
+    border-style: solid;
+    border-radius: 10%;
+    border: none;
+}
+
+.smt-btn:hover {
+    background-image: linear-gradient(rgba(107, 190, 5, 0.8), rgba(107, 190, 5, 0.6));
+}
+
+#loadingScreen p {
+    margin-top: 10px;
+}
+
+#month option {
+    text-align: center;
+}
+
+.legend-2 {
+    height: 25px;
+    position: absolute;
+    width: 238px;
+}
+
+#legend {
+    height: 85px;
+    position: absolute;
+    margin-top: 75vh;
+    background-color: white;
+    width: 255px;
+    margin-left: 40px;
+    padding-left: 10px;
+}
+
+.levels {
+    margin-top: 36px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.graph {
+    width: 100vw;
+    margin-top: 180px;
+}
+
+.graph1 {
+    width: 100%;
+    box-shadow: -1px 13px 13px 3px rgba(0, 0, 0, 0.48);
+    -webkit-box-shadow: -1px 13px 13px 3px rgba(0, 0, 0, 0.48);
+    -moz-box-shadow: -1px 13px 13px 3px rgba(0, 0, 0, 0.48);
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    border-radius: 30px;
+    margin-bottom: 30px;
+    margin-left: 3%;
+    margin-right: 3%;
+    /*height: 450px;*/
+}
+
+#toggle-side-menu {
+    position: absolute;
+    z-index: 9997;
+    background-color: white;
+    margin-left: 95%;
+    margin-top: 45vh;
+    height: 50px;
+    width: 50px;
+    display: flex;
+    align-items: center;
+    border-radius: 30px;
+    box-shadow: -1px 13px 13px 3px rgba(0, 0, 0, 0.48);
+    -webkit-box-shadow: -1px 13px 13px 3px rgba(0, 0, 0, 0.48);
+    -moz-box-shadow: -1px 13px 13px 3px rgba(0, 0, 0, 0.48);
+}
+
+#toggle-side-menu:hover,
+#toggle-side-menu button:hover {
+    background-color: #563D7C;
+}
+
+#toggle-side-menu button:hover {
+    background-color: transparent;
+}
+
+#toggle-side-menu button i {
+    color: #563D7C;
+}
+
+#toggle-side-menu button i:hover {
+    color: white;
+}
+
+#toggle-side-menu button {
+    outline: none;
+    background-color: transparent;
+    border: none;
+}
+
+#close-side-menu {
+    margin-top: 15px;
+    margin-left: 5px;
+    width: 30px;
+    background: #a965e0;
+    background-image: -webkit-linear-gradient(top, #a965e0, #8815e6);
+    background-image: -moz-linear-gradient(top, #a965e0, #8815e6);
+    background-image: -ms-linear-gradient(top, #a965e0, #8815e6);
+    background-image: -o-linear-gradient(top, #a965e0, #8815e6);
+    background-image: linear-gradient(to bottom, #a965e0, #8815e6);
+    -webkit-border-radius: 19;
+    -moz-border-radius: 19;
+    border-radius: 19px;
+    -webkit-box-shadow: 1px 5px 4px #666666;
+    -moz-box-shadow: 1px 5px 4px #666666;
+    box-shadow: 1px 5px 4px #666666;
+    font-family: Georgia;
+    color: #fefefe;
+    text-decoration: none;
+}
+
+#close-side-menu:hover {
+    background: #a610cc;
+    background-image: -webkit-linear-gradient(top, #a610cc, #9446d4);
+    background-image: -moz-linear-gradient(top, #a610cc, #9446d4);
+    background-image: -ms-linear-gradient(top, #a610cc, #9446d4);
+    background-image: -o-linear-gradient(top, #a610cc, #9446d4);
+    background-image: linear-gradient(to bottom, #a610cc, #9446d4);
+    text-decoration: none;
+}
+
+.next h3 {
+    font-family: 'Merriweather', serif;
+    margin-left: 10%;
+}

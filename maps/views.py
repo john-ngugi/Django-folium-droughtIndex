@@ -55,14 +55,11 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
     process_start = time.time()
     print('process Started ......')
      # Create a map centered at Nakuru, Kenya
-    m = folium.Map(location=[-2.3746, 37.9715],tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height="80%",name='terrainOSM')
-    worldImagery= folium.TileLayer(tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery')
+    m = folium.Map(location=[-2.3746, 37.9715],tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,name='terrainOSM',height="80%")
+    worldImagery= folium.TileLayer(tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery',height = "80%")
     # basemapOSM =folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)')
    
     worldImagery.add_to(m)
-
-   
-
     # Update the values
     YEAR_START = year_start
     YEAR_END = year_end
@@ -87,10 +84,10 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
 # Image logic and getting image from the landsat class in the landsat module 
     
     if YEAR_START >= 2000 and YEAR_END <= 2014:
-        landsat8=  landsat.landsat(YEAR_START,YEAR_END,startMonth,endMonth,"LANDSAT/LE07/C02/T1_L2",monthRangeGetLayersFunction)
+        landsat8 =  landsat.landsat(YEAR_START,YEAR_END,startMonth,endMonth,"LANDSAT/LE07/C02/T1_L2",monthRangeGetLayersFunction)
         landsatImage=landsat8.getImage()
-        landsatCollection=landsat8.dataset()
-        ndviL8 = landsat8.getNDVI(landsatCollection,"SR_B4","SR_B3")
+        landsatCollection=landsat8.landsat7()
+        ndviL8 = landsat8.getNDVI(landsatCollection,"B4","B3")
         lst = landsat8.calcLSTL5L4L7("LANDSAT/LE07/C02/T1",ndviL8,geometry).clip(geometry)
        
     if YEAR_START >2014 and YEAR_END<= 2029:
@@ -155,24 +152,19 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
                 Drought_Index, TCI, VCI, VHI, ndvi = landsat8.getLSTDroughtIndexL5L7("LANDSAT/LE07/C02/T1",start_date,end_date)
            
             if YEAR_START > 2014:
-                Drought_Index, TCI, VCI, VHI, ndvi = landsat8.getLSTDroughtIndexL8("LANDSAT/LC08/C02/T1",start_date,end_date)
+                Drought_Index, TCI, VCI, VHI, ndvi = landsat8.getLSTDroughtIndexL8(landsatCollection,start_date,end_date)
         
 
             VHI_mean = VHI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
             VHI_mean = ee.Number(VHI_mean.get('NDVI')).float().getInfo()
-            NDVI_mean = ndvi.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
-            NDVI_mean = ee.Number(NDVI_mean.get('NDVI')).float().getInfo()
             TCI_mean = TCI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
             TCI_mean = ee.Number(TCI_mean.get('constant')).float().getInfo()
             VCI_mean = VCI.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
             VCI_mean = ee.Number(VCI_mean.get('NDVI')).float().getInfo()
             Drought_Index_mean = Drought_Index.reduceRegion(ee.Reducer.mean(), geometry, 30, maxPixels=1e9)
             Drought_Index_mean = ee.Number(Drought_Index_mean.get('NDVI')).float().getInfo()
-            logFile.write(f"************************New Entry**********************\nstartDate :{start_date}\tEndDate:{end_date}\t VHI_mean: { VHI_mean}\tTCI_mean:{TCI_mean}\tNDVI_mean:{NDVI_mean}\tVCI_mean:{VCI_mean}\tDrought_index_mean: {Drought_Index_mean}\n******************************End of Entry**********************************")
-            logFile.close()
 
-            return {'start_date': start_date, 'end_date': end_date,'Drought_index_mean': Drought_Index_mean, 'TCI_mean': TCI_mean, 'VCI_mean': VCI_mean,'NDVI_mean': NDVI_mean}
-        
+            return {'start_date': start_date, 'end_date': end_date, 'VHI_mean': VHI_mean, 'Drought_index_mean': Drought_Index_mean, 'TCI_mean': TCI_mean, 'VCI_mean': VCI_mean}
 
     dates = ee.List(landsatCollection.distinct('system:time_start').aggregate_array('system:time_start')).map(
         lambda time_start: ee.Date(time_start).format('YYYY-MM-dd')).getInfo()
@@ -206,19 +198,20 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
 
     print(date_pairs)
 
-    DFTIME = time.time()
     # Perform computations for each date pair and store the results in a list
     data = []
-    
     for start_date, end_date in date_pairs:
-        result = compute_veg_indices(start_date, end_date)
+        try:
+           result = compute_veg_indices(start_date, end_date)
+        except:
+            continue
+
         data.append(result)
 
     # Convert the list of dictionaries to a pandas DataFrame and set 'start_date' and 'end_date' as the MultiIndex
-    df= pd.DataFrame(data).drop(['end_date'], axis=1).set_index('start_date')
+    df= pd.DataFrame(data).set_index('start_date')
     print(df)
 
-    # Step 1: Initialize an empty DataFrame to store the standardized values
     standardized_df = pd.DataFrame()
 
     # Step 2: Loop through each season and calculate the mean and standard deviation
@@ -227,27 +220,41 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
         min_of_season = seasonal_data['Drought_index_mean'].min()
         max_of_season = seasonal_data['Drought_index_mean'].max()
         range_of_season = max_of_season - min_of_season
-        
+
         # Step 3: Compute the standardized values for the 'Drought_index_mean' column
         standardized_values = (seasonal_data['Drought_index_mean'] - min_of_season) / range_of_season * 2 - 1
-        
+
         # Step 4: Assign the standardized values to the 'Standardized_Drought_Index' column
         seasonal_data['Standardized_Drought_Index'] = standardized_values
-        
+
         # Append the seasonal data to the empty DataFrame
         standardized_df = pd.concat([standardized_df, seasonal_data])
-        standardized_df=standardized_df.drop('Drought_index_mean',axis=1)
-        print(standardized_df.keys())
+
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+
     print(standardized_df)
+
+    #...............Mean of the standardized drought index values for each month.................#
+
+    # Reset the MultiIndex to make 'end_date' and 'start_date' regular columns
+    standardized_df.reset_index(inplace=True)
+
+    # Drop the 'end_date' column
+    standardized_df.drop('end_date', axis=1, inplace=True)
+
+    # Convert 'start_date' to the desired format '2019-07'
+    standardized_df['start_date'] = pd.to_datetime(standardized_df['start_date']).dt.strftime('%Y-%m')
+
+    # Group by 'start_date' and compute mean for all columns
+    standardized_df= standardized_df.groupby('start_date').mean().reset_index()
+    standardized_df = standardized_df.set_index('start_date')
+    standardized_df.index = pd.to_datetime(standardized_df.index).strftime("%Y/%m")
+    print(standardized_df.keys())
+    standardized_df = standardized_df.drop('Drought_index_mean',axis=1)
     
-    DFTIMEEND = time.time()
-    TOTALTIME = DFTIMEEND - DFTIME
+    print(standardized_df)
 
-    print("Total time to build dataframe is :" + Fore.RED + str(TOTALTIME) + Style.RESET_ALL)
-
-    standardized_df.index = pd.to_datetime(standardized_df.index).strftime("%d/%m/%Y")
-
-    # Plot the bar chart 
     graph = px.bar(
         standardized_df,
         barmode='group',  # Set the barmode to 'group' for separating the bars
@@ -267,9 +274,10 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
             'gamma': 1.4,
         }
 
-    
-    ndvi_params = {'min': 0, 'max': 1, 'palette': ['red', 'yellow','#006400']}
-
+    if int(YEAR_END) < 2014:
+      ndvi_params = {'min': -1, 'max': 1, 'palette': ['red','#ff4040','yellow','green','#228b22 ']}
+    else:
+       ndvi_params =  {'min': 0, 'max': 1, 'palette': ['red','yellow','#006600','green','#006400']}
 
     # Add the layer to the map
     start = time.time()
@@ -334,8 +342,8 @@ def getLayers(year_start,year_end,monthRange,startMonth,endMonth):
 
 def index(request):
     # Create a map centered at Nakuru, Kenya
-    m = folium.Map(location=[-1.2921, 36.8219], zoom_start=15,tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery')
-    worldImagery= folium.TileLayer(tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height="80%",name='terrainOSM')
+    m = folium.Map(location=[-1.2921, 36.8219], zoom_start=15,tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr= 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',name='ESRI world Imagery',height='80%')
+    worldImagery= folium.TileLayer(tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)', zoom_start=9,height='80%',name='terrainOSM')
     # basemapOSM =folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attr='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)')
     worldImagery.add_to(m)
     if request.method == 'POST':
