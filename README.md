@@ -1,2 +1,2 @@
 # Django-folium-droughtIndex
-a drought index calculation using google earth engine and folium 
+A drought index calculation using google earth engine and folium 
